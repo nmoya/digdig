@@ -1,4 +1,4 @@
-import {C, COLORS} from "./constants";
+import { C, COLORS, SPRITES } from "./constants";
 import k from "./game";
 
 
@@ -123,13 +123,13 @@ class LevelRenderer {
     drawCell(x: number, y: number): void {
         this.killVis(x, y);
         const t = this.cell(x, y);
-        if (t === C.Empty) return;
-        const col = COLORS[t as keyof typeof COLORS] ?? [255, 255, 255];
+        const sprite = SPRITES[t as keyof typeof SPRITES];
+        console.log(sprite);
+        console.log(`Drawing cell at (${x}, ${y}): type=${t}`);
+        console.log(`Position: (${x * Number(this.tileSize)}, ${y * Number(this.tileSize)})`);
         this.vis[y][x] = k.add([
-            k.rect(Number(this.tileSize) - 1, Number(this.tileSize) - 1),
             k.pos(x * Number(this.tileSize), y * Number(this.tileSize)),
-            k.color(col[0], col[1], col[2]),
-            k.outline(1, k.rgb(0, 0, 0)),
+            sprite,
         ]);
     }
 
