@@ -104,6 +104,14 @@ class LevelRenderer {
         return x >= 0 && y >= 0 && x < this.width && y < this.height;
     }
 
+    getWidth(): number {
+        return this.width;
+    }
+
+    getHeight(): number {
+        return this.height;
+    }
+
     cell(x: number, y: number): string {
         if (!this.inBounds(x, y)) return C.Wall;
         return this.grid[y][x];

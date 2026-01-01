@@ -1,4 +1,5 @@
 import { C, INITIAL_BOMB_COUNT, TICK_SECS } from "./constants";
+import GravityManager from "./gravityManager";
 import HUD from "./hud";
 import LevelRenderer from "./levelRenderer";
 import Player from "./player";
@@ -11,12 +12,16 @@ class GameLogic {
     private totalDiamonds: number;
     private tickAccSecs = 0;
 
+    private gravity: GravityManager;
+
     constructor(
         private renderer: LevelRenderer,
         private player: Player,
         private hud: HUD,
     ) {
         this.totalDiamonds = renderer.getTotalGems();
+        this.gravity = new GravityManager(renderer);
+        this.gravity.initialize();
     }
 
     isDestinationWalkable(t: string): boolean {
@@ -47,6 +52,7 @@ class GameLogic {
         this.renderer.setCell(nx, ny, C.Empty);
         this.renderer.drawCell(pushX, pushY);
         this.renderer.drawCell(nx, ny);
+        this.gravity.onRockPushed(nx, ny, pushX, pushY);
     }
 
     walkingIntoRock(destinationCell: string): boolean {
@@ -96,6 +102,9 @@ class GameLogic {
         }
 
         if (this.isDestinationWalkable(destinationCell)) {
+            const oldX = this.player.x;
+            const oldY = this.player.y;
+
             this.renderer.setCell(this.player.x, this.player.y, C.Empty);
             this.renderer.drawCell(this.player.x, this.player.y);
 
@@ -104,6 +113,8 @@ class GameLogic {
 
             this.renderer.setCell(newX, newY, C.Player);
             this.renderer.drawCell(newX, newY);
+
+            this.gravity.onPlayerMoved(oldX, oldY, newX, newY);
         }
     }
 
@@ -131,6 +142,7 @@ class GameLogic {
                     this.renderer.drawCell(x, y);
                     this.gameOver = true;
                     this.hud.setGameOver(true);
+                    this.gravity.onCellCleared(x, y);
                     continue;
                 }
 
@@ -145,6 +157,7 @@ class GameLogic {
 
                 this.renderer.setCell(x, y, C.Empty);
                 this.renderer.drawCell(x, y);
+                this.gravity.onCellCleared(x, y);
             }
         }
 
@@ -154,34 +167,10 @@ class GameLogic {
     applyGravity(): void {
         if (this.gameOver || this.win) return;
 
-        const grid: string[][] = (this.renderer as any).grid;
-        const height = grid.length;
-        const width = height > 0 ? grid[0].length : 0;
-
-        for (let y = height - 2; y >= 0; y--) {
-            for (let x = 0; x < width; x++) {
-                const t = this.renderer.cell(x, y);
-                if (t !== C.Rock && t !== C.Diamond) continue;
-
-                const below = this.renderer.cell(x, y + 1);
-
-                if (below === C.Player) {
-                    this.renderer.setCell(x, y, C.Empty);
-                    this.renderer.setCell(x, y + 1, t);
-                    this.renderer.drawCell(x, y);
-                    this.renderer.drawCell(x, y + 1);
-                    this.gameOver = true;
-                    this.hud.setGameOver(true);
-                    continue;
-                }
-
-                if (below === C.Empty) {
-                    this.renderer.setCell(x, y, C.Empty);
-                    this.renderer.setCell(x, y + 1, t);
-                    this.renderer.drawCell(x, y);
-                    this.renderer.drawCell(x, y + 1);
-                }
-            }
+        const killedPlayer = this.gravity.tick();
+        if (killedPlayer) {
+            this.gameOver = true;
+            this.hud.setGameOver(true);
         }
     }
 
@@ -194,6 +183,7 @@ class GameLogic {
         this.win = false;
         this.totalDiamonds = this.renderer.getTotalGems();
         this.hud.restart(this.totalDiamonds, this.bombs);
+        this.gravity.initialize();
     }
 
     isGameOver(): boolean {
