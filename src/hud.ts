@@ -1,4 +1,5 @@
 import k from "./game";
+import { HUD_BAR_HEIGHT } from "./constants";
 
 class HUD {
     private collected: number;
@@ -6,6 +7,7 @@ class HUD {
     private current_bombs: number;
     private game_over: boolean;
     private win: boolean;
+    private bar: any;
     private text: any;
 
     constructor(total_gems: number, bomb_count: number) {
@@ -15,10 +17,21 @@ class HUD {
         this.game_over = false;
         this.win = false;
 
-        this.text = k.add([
-            k.text("", { size: 18 }),
-            k.pos(10, 10),
+        this.bar = k.add([
+            k.rect(k.width(), HUD_BAR_HEIGHT),
+            k.pos(0, 0),
             k.fixed(),
+            k.layer("ui"),
+            k.z(100),
+            k.color(0, 0, 0),
+        ]);
+
+        this.text = k.add([
+            k.text("", { size: 12 }),
+            k.pos(10, 4),
+            k.fixed(),
+            k.layer("ui"),
+            k.z(110),
             k.color(230, 230, 235),
         ]);
 
@@ -33,10 +46,10 @@ class HUD {
         this.win = false;
         this.updateHud();
     }
-    
+
     updateHud(): void {
         const status = this.game_over ? "  GAME OVER (R to restart)" : this.win ? "  YOU WIN! (R to restart)" : "";
-        this.text.text = `Diamonds: ${this.collected}/${this.total_gems}   Bombs: ${this.current_bombs}${status}`;
+        this.text.text = `Gems: ${this.collected}/${this.total_gems}   Bombs: ${this.current_bombs}${status}`;
     }
 
     setCollected(count: number): void {
@@ -47,7 +60,6 @@ class HUD {
         this.current_bombs = count;
         this.updateHud();
     }
-
     setTotalGems(total: number): void {
         this.total_gems = total;
         this.updateHud();

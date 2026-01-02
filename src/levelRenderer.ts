@@ -6,6 +6,7 @@ import { registry, Entity } from "./entities";
 class LevelRenderer {
     private level: Level;
     private tileSize: number;
+    private offsetY: number;
 
     private mutableEntities: Entity[][];
 
@@ -14,9 +15,10 @@ class LevelRenderer {
     private exitXY: [number, number];
     private totalGems: number = 0;
 
-    constructor(level: Level, tileSize: number) {
+    constructor(level: Level, tileSize: number, offsetY: number = 0) {
         this.level = level;
         this.tileSize = tileSize;
+        this.offsetY = offsetY;
 
         this.mutableEntities = level.cloneCells();
 
@@ -85,7 +87,7 @@ class LevelRenderer {
         const t = this.cell(x, y);
         // console.log(t)
         this.vis[y][x] = k.add([
-            k.pos(x * this.tileSize, y * this.tileSize),
+            k.pos(x * this.tileSize, y * this.tileSize + this.offsetY),
             // k.rect(this.tileSize, this.tileSize),
             // k.color(t.getLevelColor()),
             t.getSprite(),

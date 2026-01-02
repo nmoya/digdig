@@ -1,5 +1,5 @@
 import k from "./game";
-import { INITIAL_BOMB_COUNT, TILE } from "./constants";
+import { HUD_BAR_HEIGHT, INITIAL_BOMB_COUNT, TILE } from "./constants";
 import Level from "./level";
 import LevelRenderer from "./levelRenderer";
 import Player from "./player";
@@ -11,10 +11,11 @@ import CameraFollow from "./camera";
 
 async function startGame(): Promise<void> {
     const _ = registry; // Ensure registry is initialized
+    k.setLayers(["bg", "game", "ui"], "game");
     const level = await Level.fromImage("assets/levels/level1.png");
     console.log(`Loaded level with dimensions: ${level.getWidth()}x${level.getHeight()}`)
 
-    const renderer = new LevelRenderer(level, TILE);
+    const renderer = new LevelRenderer(level, TILE, HUD_BAR_HEIGHT + TILE / 2);
     console.log("Rendered loaded with level.")
 
     const [startX, startY] = level.playerPosition();

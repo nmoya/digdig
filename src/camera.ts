@@ -1,5 +1,5 @@
 import k from "./game";
-import { TILE } from "./constants";
+import { HUD_BAR_HEIGHT, TILE } from "./constants";
 import Player from "./player";
 import LevelRenderer from "./levelRenderer";
 
@@ -39,21 +39,21 @@ class CameraFollow {
     private getTargetPos(): Vec2 {
         // Center camera on player's tile center.
         const desiredX = this.player.x * TILE + TILE / 2;
-        const desiredY = this.player.y * TILE + TILE / 2;
+        const desiredY = this.player.y * TILE + TILE / 2 + HUD_BAR_HEIGHT;
 
         const worldW = this.renderer.getWidth() * TILE;
         const worldH = this.renderer.getHeight() * TILE;
 
         const viewW = k.width();
-        const viewH = k.height();
+        const viewH = k.height() - HUD_BAR_HEIGHT;
 
         const halfW = viewW / 2;
         const halfH = viewH / 2;
 
         const minX = halfW;
         const maxX = worldW - halfW;
-        const minY = halfH;
-        const maxY = worldH - halfH;
+        const minY = HUD_BAR_HEIGHT + halfH;
+        const maxY = HUD_BAR_HEIGHT + worldH - halfH;
 
         const x = minX > maxX ? worldW / 2 : clamp(desiredX, minX, maxX);
         const y = minY > maxY ? worldH / 2 : clamp(desiredY, minY, maxY);
