@@ -1,5 +1,5 @@
-import { C } from "./constants";
 import LevelRenderer from "./levelRenderer";
+import { registry } from "./entities";
 
 class GravityManager {
     private activeFallers = new Set<string>();
@@ -17,10 +17,6 @@ class GravityManager {
         return { x: Number(xs), y: Number(ys) };
     }
 
-    private isFallingObject(t: string): boolean {
-        return t === C.Rock || t === C.Diamond;
-    }
-
     private forgetStateAt(x: number, y: number): void {
         const k = this.key(x, y);
         this.activeFallers.delete(k);
@@ -30,7 +26,7 @@ class GravityManager {
 
     private activateFallerAt(x: number, y: number): void {
         if (!this.renderer.inBounds(x, y)) return;
-        if (!this.isFallingObject(this.renderer.cell(x, y))) return;
+        if (!this.renderer.cell(x, y).canFall()) return;
         this.activeFallers.add(this.key(x, y));
     }
 
@@ -38,7 +34,7 @@ class GravityManager {
         const aboveY = y - 1;
         if (!this.renderer.inBounds(x, aboveY)) return;
 
-        if (!this.isFallingObject(this.renderer.cell(x, aboveY))) return;
+        if (!this.renderer.cell(x, aboveY).canFall()) return;
 
         const aboveKey = this.key(x, aboveY);
         this.armedWaitingForPlayerToLeave.delete(aboveKey);
@@ -58,7 +54,7 @@ class GravityManager {
 
         for (let y = 0; y < this.renderer.getHeight(); y++) {
             for (let x = 0; x < this.renderer.getWidth(); x++) {
-                if (this.isFallingObject(this.renderer.cell(x, y))) {
+                if (this.renderer.cell(x, y).canFall()) {
                     this.activeFallers.add(this.key(x, y));
                 }
             }
@@ -97,7 +93,7 @@ class GravityManager {
             }
 
             const t = this.renderer.cell(x, y);
-            if (!this.isFallingObject(t)) {
+            if (!t.canFall()) {
                 this.forgetStateAt(x, y);
                 continue;
             }
@@ -110,10 +106,10 @@ class GravityManager {
 
             const below = this.renderer.cell(x, belowY);
 
-            if (below === C.Player) {
+            if (below.isPlayer()) {
                 // If it's already falling and the player steps under it, it's lethal
                 if (this.hasFallenAtLeastOnce.has(item.k)) {
-                    this.renderer.setCell(x, y, C.Empty);
+                    this.renderer.setCell(x, y, registry.empty());
                     this.renderer.setCell(x, belowY, t);
                     this.renderer.drawCell(x, y);
                     this.renderer.drawCell(x, belowY);
@@ -128,10 +124,10 @@ class GravityManager {
                 continue;
             }
 
-            if (below === C.Empty) {
+            if (below.isEmpty()) {
                 const toKey = this.key(x, belowY);
 
-                this.renderer.setCell(x, y, C.Empty);
+                this.renderer.setCell(x, y, registry.empty());
                 this.renderer.setCell(x, belowY, t);
                 this.renderer.drawCell(x, y);
                 this.renderer.drawCell(x, belowY);

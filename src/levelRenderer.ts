@@ -1,125 +1,77 @@
-import { C, COLORS, SPRITES } from "./constants";
+import Level from "./level";
 import k from "./game";
+import { registry, Entity } from "./entities";
 
 
 class LevelRenderer {
-    private rawLevel: string[];
-    private tileSize: bigint;
-    private width: number;
-    private height: number;
+    private level: Level;
+    private tileSize: number;
+
+    private mutableEntities: Entity[][];
 
     private vis: (any | null)[][];
-    private grid: string[][];
     private initialPlayerXY: [number, number];
     private exitXY: [number, number];
     private totalGems: number = 0;
 
-    constructor(rawLevel: string[], tileSize: bigint) {
-        this.rawLevel = rawLevel;
+    constructor(level: Level, tileSize: number) {
+        this.level = level;
         this.tileSize = tileSize;
 
-        this.width = rawLevel[0].length;
-        this.height = rawLevel.length;
+        this.mutableEntities = level.cloneCells();
 
-        this.grid = this.gridFromRawLevel();
-        this.totalGems = this.countGemsInLevel();
-        this.initialPlayerXY = this.findInitialPlayerPosition();
-        this.exitXY = this.findExitPosition();
+        this.totalGems = this.level.totalGems();
+        this.initialPlayerXY = this.level.playerPosition();
+        this.exitXY = this.level.exitPosition();
         this.vis = this.initVisGrid();
 
     }
 
     restart(): void {
-        this.grid = this.gridFromRawLevel();
         this.vis = this.initVisGrid();
         this.redrawAll();
-    }
-
-    countGemsInLevel(): number {
-        let count = 0;
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                if (this.grid[y][x] === C.Diamond) {
-                    count++;
-                }
-            }
-        }
-        return count;
     }
 
     getInitialPlayerPosition(): [number, number] {
         return this.initialPlayerXY;
     }
 
-    findExitPosition(): [number, number] {
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                if (this.grid[y][x] === C.ExitClosed) {
-                    return [x, y];
-                }
-            }
-        }
-        new Error("No exit found in level");
-        return [0, 0];
-    }
-
     openExit(): void {
         const [ex, ey] = this.exitXY;
-        this.setCell(ex, ey, C.ExitOpen);
+        this.setCell(ex, ey, registry.openExit());
         this.drawCell(ex, ey);
-    }
-
-    findInitialPlayerPosition(): [number, number] {
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                if (this.grid[y][x] === C.Player) {
-                    return [x, y];
-                }
-            }
-        }
-        new Error("No player start position found in level");
-        return [0, 0];
     }
 
     getTotalGems(): number {
         return this.totalGems;
     }
 
-    gridFromRawLevel(): string[][] {
-        return Array.from({ length: this.height }, (_, y) =>
-            Array.from({ length: this.width }, (_, x) => {
-                const ch = this.rawLevel[y][x] ?? C.Empty;
-                return ch;
-            })
-        );
-    }
-
     initVisGrid(): (any | null)[][] {
-        return Array.from({ length: this.height }, () =>
-            Array.from({ length: this.width }, () => null)
+        return Array.from({ length: this.level.getHeight() }, () =>
+            Array.from({ length: this.level.getWidth() }, () => null)
         );
     }
 
     inBounds(x: number, y: number): boolean {
-        return x >= 0 && y >= 0 && x < this.width && y < this.height;
+        return x >= 0 && y >= 0 && x < this.level.getWidth() && y < this.level.getHeight();
     }
 
     getWidth(): number {
-        return this.width;
+        return this.level.getWidth();
     }
 
     getHeight(): number {
-        return this.height;
+        return this.level.getHeight();
     }
 
-    cell(x: number, y: number): string {
-        if (!this.inBounds(x, y)) return C.Wall;
-        return this.grid[y][x];
+    cell(x: number, y: number): Entity {
+        if (!this.inBounds(x, y)) return registry.wall();
+        return this.mutableEntities[y][x];
     }
 
-    setCell(x: number, y: number, v: string): void {
+    setCell(x: number, y: number, v: Entity): void {
         if (!this.inBounds(x, y)) return;
-        this.grid[y][x] = v;
+        this.mutableEntities[y][x] = v;
     }
 
     killVis(x: number, y: number): void {
@@ -131,19 +83,18 @@ class LevelRenderer {
     drawCell(x: number, y: number): void {
         this.killVis(x, y);
         const t = this.cell(x, y);
-        const sprite = SPRITES[t as keyof typeof SPRITES];
-        console.log(sprite);
-        console.log(`Drawing cell at (${x}, ${y}): type=${t}`);
-        console.log(`Position: (${x * Number(this.tileSize)}, ${y * Number(this.tileSize)})`);
+        // console.log(t)
         this.vis[y][x] = k.add([
-            k.pos(x * Number(this.tileSize), y * Number(this.tileSize)),
-            sprite,
+            k.pos(x * this.tileSize, y * this.tileSize),
+            // k.rect(this.tileSize, this.tileSize),
+            // k.color(t.getLevelColor()),
+            t.getSprite(),
         ]);
     }
 
     redrawAll(): void {
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
+        for (let y = 0; y < this.level.getHeight(); y++) {
+            for (let x = 0; x < this.level.getWidth(); x++) {
                 this.drawCell(x, y);
             }
         }

@@ -1,8 +1,9 @@
-import { C, INITIAL_BOMB_COUNT, TICK_SECS } from "./constants";
+import { INITIAL_BOMB_COUNT, TICK_SECS } from "./constants";
 import GravityManager from "./gravityManager";
 import HUD from "./hud";
 import LevelRenderer from "./levelRenderer";
 import Player from "./player";
+import { Entity, registry } from "./entities";
 
 class GameLogic {
     private collected = 0;
@@ -24,52 +25,27 @@ class GameLogic {
         this.gravity.initialize();
     }
 
-    isDestinationWalkable(t: string): boolean {
-        return (
-            t === C.Empty ||
-            t === C.Dirt ||
-            t === C.Diamond ||
-            t === C.ExitOpen
-        );
-    }
-
-    isDestinationBlocked(t: string): boolean {
-        return t === C.Wall || t === C.ExitClosed;
-    }
-
-    canRockBePushed(dx: number, dy: number, destCell: string, nx: number, ny: number): boolean {
+    canRockBePushed(dx: number, dy: number, destCell: Entity, nx: number, ny: number): boolean {
         return (
             dy === 0 && // only horizontal pushing
-            destCell === C.Rock && // destination is rock
-            this.renderer.cell(nx + dx, ny) === C.Empty // cell beyond rock is empty
+            destCell.isRock() && // destination is rock
+            this.renderer.cell(nx + dx, ny).isEmpty() // cell beyond rock is empty
         );
     }
 
     pushRock(dx: number, nx: number, ny: number): void {
         const pushX = nx + dx;
         const pushY = ny;
-        this.renderer.setCell(pushX, pushY, C.Rock);
-        this.renderer.setCell(nx, ny, C.Empty);
+        this.renderer.setCell(pushX, pushY, registry.rock());
+        this.renderer.setCell(nx, ny, registry.empty());
         this.renderer.drawCell(pushX, pushY);
         this.renderer.drawCell(nx, ny);
         this.gravity.onRockPushed(nx, ny, pushX, pushY);
     }
 
-    walkingIntoRock(destinationCell: string): boolean {
-        return destinationCell === C.Rock;
-    }
-
-    walkingIntoDiamond(destinationCell: string): boolean {
-        return destinationCell === C.Diamond;
-    }
-
     collectDiamond(): void {
         this.collected++;
         this.hud.setCollected(this.collected);
-    }
-
-    walkingIntoOpenExit(destinationCell: string): boolean {
-        return destinationCell === C.ExitOpen;
     }
 
     movePlayer(deltaX: number, deltaY: number): void {
@@ -79,8 +55,8 @@ class GameLogic {
         const newY = this.player.y + deltaY;
         const destinationCell = this.renderer.cell(newX, newY);
 
-        if (this.isDestinationBlocked(destinationCell)) return;
-        if (this.walkingIntoRock(destinationCell)) {
+        if (destinationCell.isImmovable()) return;
+        if (destinationCell.isRock()) {
             if (this.canRockBePushed(deltaX, deltaY, destinationCell, newX, newY)) {
                 this.pushRock(deltaX, newX, newY);
             } else {
@@ -88,30 +64,30 @@ class GameLogic {
             }
         }
 
-        if (this.walkingIntoDiamond(destinationCell)) {
+        if (destinationCell.isGem()) {
             this.collectDiamond();
             if (this.collected >= this.totalDiamonds) {
                 this.renderer.openExit();
             }
         }
 
-        if (this.walkingIntoOpenExit(destinationCell)) {
+        if (destinationCell.isExitOpen()) {
             this.win = true;
             this.hud.setWin(true);
             return;
         }
 
-        if (this.isDestinationWalkable(destinationCell)) {
+        if (destinationCell.isWalkable()) {
             const oldX = this.player.x;
             const oldY = this.player.y;
 
-            this.renderer.setCell(this.player.x, this.player.y, C.Empty);
+            this.renderer.setCell(this.player.x, this.player.y, registry.empty());
             this.renderer.drawCell(this.player.x, this.player.y);
 
             this.player.x = newX;
             this.player.y = newY;
 
-            this.renderer.setCell(newX, newY, C.Player);
+            this.renderer.setCell(newX, newY, registry.player());
             this.renderer.drawCell(newX, newY);
 
             this.gravity.onPlayerMoved(oldX, oldY, newX, newY);
@@ -132,13 +108,13 @@ class GameLogic {
             for (let x = cx - 1; x <= cx + 1; x++) {
                 if (!this.renderer.inBounds(x, y)) continue;
                 const t = this.renderer.cell(x, y);
-                if (t === C.Wall) continue;
+                if (t.isWall()) continue;
                 // Don't delete open exit (optional choice)
-                if (t === C.ExitOpen) continue;
+                if (t.isExitOpen()) continue;
 
                 // If we blast ourselves -> lose
                 if (x === cx && y === cy) {
-                    this.renderer.setCell(x, y, C.Empty);
+                    this.renderer.setCell(x, y, registry.empty());
                     this.renderer.drawCell(x, y);
                     this.gameOver = true;
                     this.hud.setGameOver(true);
@@ -147,7 +123,7 @@ class GameLogic {
                 }
 
                 // If we blast diamonds, reduce requirement so the level remains completable
-                if (t === C.Diamond) {
+                if (t.isGem()) {
                     this.totalDiamonds = Math.max(0, this.totalDiamonds - 1);
                     this.hud.setTotalGems(this.totalDiamonds);
                     if (this.collected >= this.totalDiamonds) {
@@ -155,7 +131,7 @@ class GameLogic {
                     }
                 }
 
-                this.renderer.setCell(x, y, C.Empty);
+                this.renderer.setCell(x, y, registry.empty());
                 this.renderer.drawCell(x, y);
                 this.gravity.onCellCleared(x, y);
             }
