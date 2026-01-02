@@ -14,14 +14,14 @@ const k: any = kaplay({
 })
 
 k.loadRoot("./")
-k.loadSprite("closed_door", `assets/images/closed_door.png`)
-k.loadSprite("dirt", `assets/images/dirt_single.png`)
-k.loadSprite("empty", `assets/images/empty.png`)
-k.loadSprite("gem", `assets/images/gem.png`)
-k.loadSprite("open_door", `assets/images/open_door.png`)
-k.loadSprite("player", `assets/images/player.png`)
-k.loadSprite("rock", `assets/images/rock.png`)
-k.loadSprite("wall", `assets/images/wall.png`)
+k.loadSprite("closed_door", `sprites/closed_door.png`)
+k.loadSprite("dirt", `sprites/dirt_single.png`)
+k.loadSprite("empty", `sprites/empty.png`)
+k.loadSprite("gem", `sprites/gem.png`)
+k.loadSprite("open_door", `sprites/open_door.png`)
+k.loadSprite("player", `sprites/player.png`)
+k.loadSprite("rock", `sprites/rock.png`)
+k.loadSprite("wall", `sprites/wall.png`)
 
 
 export default k

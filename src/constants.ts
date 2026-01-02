@@ -13,6 +13,6 @@ export type LevelConfig = {
 }
 
 export const LEVELS: LevelConfig[] = [
-    { id: "level1", name: "Level 1", url: "assets/levels/level1.png", next: "level2" },
-    { id: "level2", name: "Level 2", url: "assets/levels/level1.png", next: null },
+    { id: "level1", name: "Level 1", url: "levels/level1.png", next: "level2" },
+    { id: "level2", name: "Level 2", url: "levels/level1.png", next: null },
 ]
