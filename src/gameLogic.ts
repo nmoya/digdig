@@ -4,6 +4,7 @@ import HUD from "./hud"
 import LevelRenderer from "./levelRenderer"
 import Player from "./player"
 import { Entity, registry } from "./entities"
+import { LogInOut } from "./debug"
 
 class GameLogic {
     private collected = 0
@@ -48,6 +49,7 @@ class GameLogic {
         this.hud.setCollected(this.collected)
     }
 
+    @LogInOut
     movePlayer(deltaX: number, deltaY: number): void {
         if (this.gameOver || this.win) return
 
@@ -160,6 +162,7 @@ class GameLogic {
         }
     }
 
+    @LogInOut
     restart(): void {
         this.renderer.restart()
         this.player.restart(...this.renderer.getInitialPlayerPosition())

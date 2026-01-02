@@ -1,5 +1,6 @@
 import LevelRenderer from "./levelRenderer"
 import { Entity, registry } from "./entities"
+import { LogInOut } from "./debug"
 
 class GravityManager {
     private activeFallers = new Set<string>()
@@ -35,7 +36,6 @@ class GravityManager {
     }
 
     private onCellEmptied(x: number, y: number): void {
-        console.log('Cell emptied at', x, y)
         const aboveY = y - 1
         if (!this.renderer.inBounds(x, aboveY)) {
             return
@@ -173,7 +173,6 @@ class GravityManager {
             const canLeft = this.canFallIntoSideShaft(leftX, y)
             const canRight = !canLeft && this.canFallIntoSideShaft(rightX, y)
 
-            console.log(canLeft, canRight)
 
             if (canLeft || canRight) {
                 const targetX = canLeft ? leftX : rightX

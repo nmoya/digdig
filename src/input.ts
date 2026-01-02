@@ -1,5 +1,6 @@
 import k from "./game"
 import { PLAYER_MOVE_SPEED } from "./constants"
+import { debug } from "node:console"
 
 export type InputActions = {
     move: (dx: number, dy: number) => void
@@ -7,6 +8,7 @@ export type InputActions = {
     restart: () => void
     winLevel: () => void
 }
+
 
 class InputController {
     private unsubscribers: Array<() => void> = []

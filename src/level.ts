@@ -1,3 +1,4 @@
+import { LogInOut } from "./debug"
 import { Entity, registry } from "./entities"
 
 class Level {
@@ -103,6 +104,7 @@ class Level {
         throw new Error("No exit found in level")
     }
 
+    @LogInOut
     playerPosition(): [number, number] {
         let y = 0
         while (y < this.cells.length) {
@@ -130,8 +132,11 @@ class Level {
         return this.cells.map(row => row.slice())
     }
 
+    @LogInOut
     static async fromImage(filepath: string): Promise<Level> {
-        return Level.loadLevel(filepath)
+        const level = await Level.loadLevel(filepath)
+        console.info(`Loaded level "${filepath}" with dimensions: ${level.getWidth()}x${level.getHeight()}`)
+        return level
     }
 }
 
