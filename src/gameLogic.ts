@@ -1,186 +1,197 @@
-import { INITIAL_BOMB_COUNT, TICK_SECS } from "./constants";
-import GravityManager from "./gravityManager";
-import HUD from "./hud";
-import LevelRenderer from "./levelRenderer";
-import Player from "./player";
-import { Entity, registry } from "./entities";
+import { INITIAL_BOMB_COUNT, TICK_SECS } from "./constants"
+import GravityManager from "./gravityManager"
+import HUD from "./hud"
+import LevelRenderer from "./levelRenderer"
+import Player from "./player"
+import { Entity, registry } from "./entities"
 
 class GameLogic {
-    private collected = 0;
-    private bombs = INITIAL_BOMB_COUNT;
-    private gameOver = false;
-    private win = false;
-    private totalDiamonds: number;
-    private tickAccSecs = 0;
+    private collected = 0
+    private bombs = INITIAL_BOMB_COUNT
+    private gameOver = false
+    private win = false
+    private totalDiamonds: number
+    private tickAccSecs = 0
 
-    private gravity: GravityManager;
+    private gravity: GravityManager
 
     constructor(
         private renderer: LevelRenderer,
         private player: Player,
         private hud: HUD,
     ) {
-        this.totalDiamonds = renderer.getTotalGems();
-        this.gravity = new GravityManager(renderer);
-        this.gravity.initialize();
+        this.totalDiamonds = renderer.getTotalGems()
+        this.gravity = new GravityManager(renderer)
+        this.gravity.initialize()
     }
 
     canRockBePushed(dx: number, dy: number, destCell: Entity, nx: number, ny: number): boolean {
         return (
-            dy === 0 && // only horizontal pushing
-            destCell.isRock() && // destination is rock
-            this.renderer.cell(nx + dx, ny).isEmpty() // cell beyond rock is empty
-        );
+            dy === 0 &&
+            destCell.isRock() &&
+            this.renderer.cell(nx + dx, ny).isEmpty()
+        )
     }
 
     pushRock(dx: number, nx: number, ny: number): void {
-        const pushX = nx + dx;
-        const pushY = ny;
-        this.renderer.setCell(pushX, pushY, registry.rock());
-        this.renderer.setCell(nx, ny, registry.empty());
-        this.renderer.drawCell(pushX, pushY);
-        this.renderer.drawCell(nx, ny);
-        this.gravity.onRockPushed(nx, ny, pushX, pushY);
+        const pushX = nx + dx
+        const pushY = ny
+        this.renderer.setCell(pushX, pushY, registry.rock())
+        this.renderer.setCell(nx, ny, registry.empty())
+        this.renderer.drawCell(pushX, pushY)
+        this.renderer.drawCell(nx, ny)
+        this.gravity.onRockPushed(nx, ny, pushX, pushY)
     }
 
     collectDiamond(): void {
-        this.collected++;
-        this.hud.setCollected(this.collected);
+        this.collected++
+        this.hud.setCollected(this.collected)
     }
 
     movePlayer(deltaX: number, deltaY: number): void {
-        if (this.gameOver || this.win) return;
+        if (this.gameOver || this.win) return
 
-        const newX = this.player.x + deltaX;
-        const newY = this.player.y + deltaY;
-        const destinationCell = this.renderer.cell(newX, newY);
+        const newX = this.player.x + deltaX
+        const newY = this.player.y + deltaY
+        const destinationCell = this.renderer.cell(newX, newY)
 
-        if (destinationCell.isImmovable()) return;
+        if (destinationCell.isImmovable()) return
         if (destinationCell.isRock()) {
             if (this.canRockBePushed(deltaX, deltaY, destinationCell, newX, newY)) {
-                this.pushRock(deltaX, newX, newY);
+                this.pushRock(deltaX, newX, newY)
             } else {
-                return;
+                return
             }
         }
 
         if (destinationCell.isGem()) {
-            this.collectDiamond();
+            this.collectDiamond()
             if (this.collected >= this.totalDiamonds) {
-                this.renderer.openExit();
+                this.renderer.openExit()
             }
         }
 
         if (destinationCell.isExitOpen()) {
-            this.winLevel();
-            return;
+            this.winLevel()
+            return
         }
 
         if (destinationCell.isWalkable()) {
-            const oldX = this.player.x;
-            const oldY = this.player.y;
+            const oldX = this.player.x
+            const oldY = this.player.y
 
-            this.renderer.setCell(this.player.x, this.player.y, registry.empty());
-            this.renderer.drawCell(this.player.x, this.player.y);
+            this.renderer.setCell(this.player.x, this.player.y, registry.empty())
+            this.renderer.drawCell(this.player.x, this.player.y)
 
-            this.player.x = newX;
-            this.player.y = newY;
+            this.player.x = newX
+            this.player.y = newY
 
-            this.renderer.setCell(newX, newY, registry.player());
-            this.renderer.drawCell(newX, newY);
+            this.renderer.setCell(newX, newY, registry.player())
+            this.renderer.drawCell(newX, newY)
 
-            this.gravity.onPlayerMoved(oldX, oldY, newX, newY);
+            this.gravity.onPlayerMoved(oldX, oldY, newX, newY)
         }
     }
 
     useBomb(): void {
-        if (this.gameOver || this.win) return;
-        if (this.bombs <= 0) return;
+        if (this.gameOver || this.win) return
+        if (this.bombs <= 0) return
 
-        this.bombs--;
+        this.bombs--
 
-        const cx = this.player.x;
-        const cy = this.player.y;
+        const cx = this.player.x
+        const cy = this.player.y
 
         // 3x3 blast (doesn't remove walls)
-        for (let y = cy - 1; y <= cy + 1; y++) {
-            for (let x = cx - 1; x <= cx + 1; x++) {
-                if (!this.renderer.inBounds(x, y)) continue;
-                const t = this.renderer.cell(x, y);
-                if (t.isWall()) continue;
-                // Don't delete open exit (optional choice)
-                if (t.isExitOpen()) continue;
-
-                // If we blast ourselves -> lose
-                if (x === cx && y === cy) {
-                    this.renderer.setCell(x, y, registry.empty());
-                    this.renderer.drawCell(x, y);
-                    this.gameOver = true;
-                    this.hud.setGameOver(true);
-                    this.gravity.onCellCleared(x, y);
-                    continue;
+        let y = cy - 1
+        while (y <= cy + 1) {
+            let x = cx - 1
+            while (x <= cx + 1) {
+                if (!this.renderer.inBounds(x, y)) {
+                    x++
+                    continue
+                }
+                const t = this.renderer.cell(x, y)
+                if (t.isWall()) {
+                    x++
+                    continue
+                }
+                if (t.isExitOpen()) {
+                    x++
+                    continue
                 }
 
-                // If we blast diamonds, reduce requirement so the level remains completable
+                if (x === cx && y === cy) {
+                    this.renderer.setCell(x, y, registry.empty())
+                    this.renderer.drawCell(x, y)
+                    this.gameOver = true
+                    this.hud.setGameOver(true)
+                    this.gravity.onCellCleared(x, y)
+                    x++
+                    continue
+                }
+
                 if (t.isGem()) {
-                    this.totalDiamonds = Math.max(0, this.totalDiamonds - 1);
-                    this.hud.setTotalGems(this.totalDiamonds);
+                    this.totalDiamonds = Math.max(0, this.totalDiamonds - 1)
+                    this.hud.setTotalGems(this.totalDiamonds)
                     if (this.collected >= this.totalDiamonds) {
-                        this.renderer.openExit();
+                        this.renderer.openExit()
                     }
                 }
 
-                this.renderer.setCell(x, y, registry.empty());
-                this.renderer.drawCell(x, y);
-                this.gravity.onCellCleared(x, y);
+                this.renderer.setCell(x, y, registry.empty())
+                this.renderer.drawCell(x, y)
+                this.gravity.onCellCleared(x, y)
+                x++
             }
+            y++
         }
 
-        this.hud.setBombs(this.bombs);
+        this.hud.setBombs(this.bombs)
     }
 
     applyGravity(): void {
-        if (this.gameOver || this.win) return;
+        if (this.gameOver || this.win) return
 
-        const killedPlayer = this.gravity.tick();
+        const killedPlayer = this.gravity.tick()
         if (killedPlayer) {
-            this.gameOver = true;
-            this.hud.setGameOver(true);
+            this.gameOver = true
+            this.hud.setGameOver(true)
         }
     }
 
     restart(): void {
-        this.renderer.restart();
-        this.player.restart(...this.renderer.getInitialPlayerPosition());
-        this.collected = 0;
-        this.bombs = INITIAL_BOMB_COUNT;
-        this.gameOver = false;
-        this.win = false;
-        this.totalDiamonds = this.renderer.getTotalGems();
-        this.hud.restart(this.totalDiamonds, this.bombs);
-        this.gravity.initialize();
+        this.renderer.restart()
+        this.player.restart(...this.renderer.getInitialPlayerPosition())
+        this.collected = 0
+        this.bombs = INITIAL_BOMB_COUNT
+        this.gameOver = false
+        this.win = false
+        this.totalDiamonds = this.renderer.getTotalGems()
+        this.hud.restart(this.totalDiamonds, this.bombs)
+        this.gravity.initialize()
     }
 
     isGameOver(): boolean {
-        return this.gameOver;
+        return this.gameOver
     }
 
     winLevel(): void {
-        this.win = true;
-        this.hud.setWin(true);
+        this.win = true
+        this.hud.setWin(true)
     }
 
     didWin(): boolean {
-        return this.win;
+        return this.win
     }
 
     update(dt: number): void {
-        this.tickAccSecs += dt;
+        this.tickAccSecs += dt
         while (this.tickAccSecs >= TICK_SECS) {
-            this.tickAccSecs -= TICK_SECS;
-            this.applyGravity();
+            this.tickAccSecs -= TICK_SECS
+            this.applyGravity()
         }
     }
 }
 
-export default GameLogic;
+export default GameLogic
