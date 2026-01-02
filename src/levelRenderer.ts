@@ -11,7 +11,6 @@ class LevelRenderer {
     private mutableEntities: Entity[][]
 
     private vis: (any | null)[][]
-    private totalGems: number = 0
 
     constructor(level: Level, tileSize: number, offsetY: number = 0) {
         this.level = level
@@ -20,12 +19,12 @@ class LevelRenderer {
         this.vis = this.initVisGrid()
         this.mutableEntities = level.cloneCells()
         this.closeExit()
-
-        this.totalGems = this.level.totalGems()
     }
 
     restart(): void {
         this.vis = this.initVisGrid()
+        this.mutableEntities = this.level.cloneCells()
+        this.closeExit()
         this.redrawAll()
     }
 
@@ -46,7 +45,7 @@ class LevelRenderer {
     }
 
     getTotalGems(): number {
-        return this.totalGems
+        return this.level.totalGems()
     }
 
     initVisGrid(): (any | null)[][] {
