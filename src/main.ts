@@ -23,7 +23,7 @@ k.scene("game", async (levelToLoad: LevelConfig) => {
     console.log(`Player start position: (${startX}, ${startY})`)
 
     const player = new Player(startX, startY)
-    const hud = new HUD(level.totalGems(), INITIAL_BOMB_COUNT)
+    const hud = new HUD(level.totalGems(), INITIAL_BOMB_COUNT, levelToLoad.name)
     const game = new GameLogic(renderer, player, hud)
     const camera = new CameraFollow(renderer, player)
     console.log("Initialized game logic.")

@@ -1,12 +1,12 @@
 import LevelRenderer from "./levelRenderer"
-import { registry } from "./entities"
+import { Entity, registry } from "./entities"
 
 class GravityManager {
     private activeFallers = new Set<string>()
     private armedWaitingForPlayerToLeave = new Set<string>()
     private hasFallenAtLeastOnce = new Set<string>()
 
-    constructor(private renderer: LevelRenderer) { }
+    constructor(private renderer: LevelRenderer, private minSideShaftDepth: number = 2) { }
 
     private key(x: number, y: number): string {
         return `${x},${y}`
@@ -15,6 +15,10 @@ class GravityManager {
     private parseKey(key: string): { x: number, y: number } {
         const [xs, ys] = key.split(",")
         return { x: Number(xs), y: Number(ys) }
+    }
+
+    private isFallingObject(t: Entity): boolean {
+        return t.canFall()
     }
 
     private forgetStateAt(x: number, y: number): void {
@@ -26,24 +30,34 @@ class GravityManager {
 
     private activateFallerAt(x: number, y: number): void {
         if (!this.renderer.inBounds(x, y)) return
-        if (!this.renderer.cell(x, y).canFall()) return
+        if (!this.isFallingObject(this.renderer.cell(x, y))) return
         this.activeFallers.add(this.key(x, y))
     }
 
     private onCellEmptied(x: number, y: number): void {
+        console.log('Cell emptied at', x, y)
         const aboveY = y - 1
-        if (!this.renderer.inBounds(x, aboveY)) return
-
-        if (!this.renderer.cell(x, aboveY).canFall()) return
-
+        if (!this.renderer.inBounds(x, aboveY)) {
+            return
+        }
+        // Also check left and right neighbors of the emptied cell (shaft)
+        const leftX = x - 1
+        const rightX = x + 1
+        if (this.renderer.inBounds(leftX, y) && this.isFallingObject(this.renderer.cell(leftX, y))) {
+            this.activeFallers.add(this.key(leftX, y))
+        }
+        if (this.renderer.inBounds(rightX, y) && this.isFallingObject(this.renderer.cell(rightX, y))) {
+            this.activeFallers.add(this.key(rightX, y))
+        }
+        if (!this.isFallingObject(this.renderer.cell(x, aboveY))) {
+            return
+        }
         const aboveKey = this.key(x, aboveY)
         this.armedWaitingForPlayerToLeave.delete(aboveKey)
         this.activeFallers.add(aboveKey)
     }
 
     private onPlayerEnteredCell(x: number, y: number): void {
-        // If the player moves under a resting rock/gem, ensure we consider it on the next tick
-        // so we can "arm" it (instead of letting it fall the instant the player leaves)
         this.activateFallerAt(x, y - 1)
     }
 
@@ -52,16 +66,12 @@ class GravityManager {
         this.armedWaitingForPlayerToLeave.clear()
         this.hasFallenAtLeastOnce.clear()
 
-        let y = 0
-        while (y < this.renderer.getHeight()) {
-            let x = 0
-            while (x < this.renderer.getWidth()) {
-                if (this.renderer.cell(x, y).canFall()) {
+        for (let y = 0; y < this.renderer.getHeight(); y++) {
+            for (let x = 0; x < this.renderer.getWidth(); x++) {
+                if (this.isFallingObject(this.renderer.cell(x, y))) {
                     this.activeFallers.add(this.key(x, y))
                 }
-                x++
             }
-            y++
         }
     }
 
@@ -81,10 +91,21 @@ class GravityManager {
         this.onCellEmptied(x, y)
     }
 
+    private canFallIntoSideShaft(targetX: number, y: number): boolean {
+        // Require an empty column of at least minSideShaftDepth starting at y (current row).
+        for (let d = 0; d < this.minSideShaftDepth; d++) {
+            const yy = y + d
+            if (!this.renderer.inBounds(targetX, yy)) return false
+            if (!this.renderer.cell(targetX, yy).isEmpty()) return false
+        }
+        return true
+    }
+
+    // Returns true if gravity killed the player this tick.
     tick(): boolean {
         const toProcess = Array.from(this.activeFallers)
             .map((k) => ({ k, ...this.parseKey(k) }))
-            .sort((a, b) => b.y - a.y || a.x - b.x)
+            .sort((a, b) => a.y - b.y || a.x - b.x) // top-down so upper rocks can slide before lower ones fall
 
         for (const item of toProcess) {
             if (!this.activeFallers.has(item.k)) continue
@@ -97,7 +118,7 @@ class GravityManager {
             }
 
             const t = this.renderer.cell(x, y)
-            if (!t.canFall()) {
+            if (!this.isFallingObject(t)) {
                 this.forgetStateAt(x, y)
                 continue
             }
@@ -111,7 +132,8 @@ class GravityManager {
             const below = this.renderer.cell(x, belowY)
 
             if (below.isPlayer()) {
-                if (this.hasFallenAtLeastOnce.has(item.k)) {
+                // Gems do not kill the player
+                if (!t.isGem() && this.hasFallenAtLeastOnce.has(item.k)) {
                     this.renderer.setCell(x, y, registry.empty())
                     this.renderer.setCell(x, belowY, t)
                     this.renderer.drawCell(x, y)
@@ -138,6 +160,34 @@ class GravityManager {
                 this.activeFallers.add(toKey)
                 this.armedWaitingForPlayerToLeave.delete(item.k)
 
+                this.hasFallenAtLeastOnce.delete(item.k)
+                this.hasFallenAtLeastOnce.add(toKey)
+
+                this.onCellEmptied(x, y)
+                continue
+            }
+
+            // Try to fall into an adjacent vertical shaft (depth >= 2): move diagonally into it.
+            const leftX = x - 1
+            const rightX = x + 1
+            const canLeft = this.canFallIntoSideShaft(leftX, y)
+            const canRight = !canLeft && this.canFallIntoSideShaft(rightX, y)
+
+            console.log(canLeft, canRight)
+
+            if (canLeft || canRight) {
+                const targetX = canLeft ? leftX : rightX
+                const targetY = y + 1
+                const toKey = this.key(targetX, targetY)
+
+                this.renderer.setCell(x, y, registry.empty())
+                this.renderer.setCell(targetX, targetY, t)
+                this.renderer.drawCell(x, y)
+                this.renderer.drawCell(targetX, targetY)
+
+                this.activeFallers.delete(item.k)
+                this.activeFallers.add(toKey)
+                this.armedWaitingForPlayerToLeave.delete(item.k)
                 this.hasFallenAtLeastOnce.delete(item.k)
                 this.hasFallenAtLeastOnce.add(toKey)
 

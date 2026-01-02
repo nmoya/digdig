@@ -9,10 +9,12 @@ class HUD {
     private win: boolean
     private bar: any
     private text: any
+    private levelName: string
 
-    constructor(total_gems: number, bomb_count: number) {
+    constructor(total_gems: number, bomb_count: number, levelName: string) {
         this.collected = 0
         this.total_gems = total_gems
+        this.levelName = levelName
         this.current_bombs = bomb_count
         this.game_over = false
         this.win = false
@@ -49,7 +51,7 @@ class HUD {
 
     updateHud(): void {
         const status = this.game_over ? "  GAME OVER (R to restart)" : this.win ? "  YOU WIN! (R to restart)" : ""
-        this.text.text = `Gems: ${this.collected}/${this.total_gems}   Bombs: ${this.current_bombs}${status}`
+        this.text.text = `${this.levelName}   Gems: ${this.collected}/${this.total_gems}   Bombs: ${this.current_bombs}${status}`
     }
 
     setCollected(count: number): void {
