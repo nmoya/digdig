@@ -7,6 +7,7 @@ import HUD from "./hud";
 import GameLogic from "./gameLogic";
 import InputController from "./input";
 import { registry } from "./entities";
+import CameraFollow from "./camera";
 
 async function startGame(): Promise<void> {
     const _ = registry; // Ensure registry is initialized
@@ -22,6 +23,7 @@ async function startGame(): Promise<void> {
     const player = new Player(startX, startY);
     const hud = new HUD(level.totalGems(), INITIAL_BOMB_COUNT);
     const game = new GameLogic(renderer, player, hud);
+    const camera = new CameraFollow(renderer, player);
     console.log("Initialized game logic.");
     renderer.redrawAll();
     console.log("Starting game loop.");
@@ -35,6 +37,7 @@ async function startGame(): Promise<void> {
 
     k.onUpdate(() => {
         game.update(k.dt());
+        camera.update(k.dt());
     });
 }
 
