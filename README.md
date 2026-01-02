@@ -4,13 +4,18 @@
 - `dist` - distribution folder, contains your index.html, built js bundle and static assets
 
 
+# Github pages URL
+
+The latest version is available here [https://nikolasmoya.com/digdig/](https://nikolasmoya.com/digdig/)
+
+
 ## Development
 
 ```sh
 $ npm run dev
 ```
 
-will start a dev server at http://localhost:8000
+will start a dev server at http://localhost:3001
 
 ## Distribution
 
