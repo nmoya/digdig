@@ -72,8 +72,7 @@ class GameLogic {
         }
 
         if (destinationCell.isExitOpen()) {
-            this.win = true;
-            this.hud.setWin(true);
+            this.winLevel();
             return;
         }
 
@@ -164,6 +163,11 @@ class GameLogic {
 
     isGameOver(): boolean {
         return this.gameOver;
+    }
+
+    winLevel(): void {
+        this.win = true;
+        this.hud.setWin(true);
     }
 
     didWin(): boolean {

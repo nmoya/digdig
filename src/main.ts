@@ -1,5 +1,5 @@
 import k from "./game";
-import { HUD_BAR_HEIGHT, INITIAL_BOMB_COUNT, TILE } from "./constants";
+import { HUD_BAR_HEIGHT, INITIAL_BOMB_COUNT, TILE, LevelConfig, LEVELS } from "./constants";
 import Level from "./level";
 import LevelRenderer from "./levelRenderer";
 import Player from "./player";
@@ -9,14 +9,15 @@ import InputController from "./input";
 import { registry } from "./entities";
 import CameraFollow from "./camera";
 
-async function startGame(): Promise<void> {
-    const _ = registry; // Ensure registry is initialized
-    k.setLayers(["bg", "game", "ui"], "game");
-    const level = await Level.fromImage("assets/levels/level1.png");
-    console.log(`Loaded level with dimensions: ${level.getWidth()}x${level.getHeight()}`)
+
+k.scene("game", async (levelToLoad: LevelConfig) => {
+    const _ = registry; // Ensure registry is initialized per scene
+
+    const level = await Level.fromImage(levelToLoad.url);
+    console.log(`Loaded level "${levelToLoad.id}" with dimensions: ${level.getWidth()}x${level.getHeight()}`);
 
     const renderer = new LevelRenderer(level, TILE, HUD_BAR_HEIGHT + TILE / 2);
-    console.log("Rendered loaded with level.")
+    console.log("Renderer ready with loaded level.");
 
     const [startX, startY] = level.playerPosition();
     console.log(`Player start position: (${startX}, ${startY})`);
@@ -29,19 +30,30 @@ async function startGame(): Promise<void> {
     renderer.redrawAll();
     console.log("Starting game loop.");
 
-
     new InputController({
         move: (dx, dy) => game.movePlayer(dx, dy),
         bomb: () => game.useBomb(),
         restart: () => game.restart(),
+        winLevel: () => {
+            game.winLevel();
+        }
     });
 
     k.onUpdate(() => {
-        game.update(k.dt());
-        camera.update(k.dt());
+        const dt = k.dt();
+        game.update(dt);
+        if (game.didWin() && levelToLoad.next) {
+            k.go("game", LEVELS.find(l => l.id === levelToLoad.next)!)
+            return
+        }
+        if (game.isGameOver()) {
+            k.go("game", LEVELS[0]);
+            return
+        }
+        camera.update(dt);
     });
-}
+});
 
 k.onLoad(() => {
-    void startGame();
+    k.go("game", LEVELS[0]);
 });

@@ -5,6 +5,7 @@ export type InputActions = {
     move: (dx: number, dy: number) => void;
     bomb: () => void;
     restart: () => void;
+    winLevel: () => void;
 };
 
 class InputController {
@@ -114,6 +115,7 @@ class InputController {
 
         onKeyPress("space", () => this.actions.bomb());
         onKeyPress("r", () => this.actions.restart());
+        onKeyPress("k", () => this.actions.winLevel());
     }
 
     dispose(): void {
