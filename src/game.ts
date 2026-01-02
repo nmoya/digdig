@@ -5,7 +5,7 @@ const k: any = kaplay({
     height: 192,
     letterbox: true,
     crisp: true,
-    pixelDensity: 1,
+    pixelDensity: 4,
     stretch: true,
     background: [15, 15, 18],
     global: false,
