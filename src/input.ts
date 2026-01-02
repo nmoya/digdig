@@ -41,9 +41,25 @@ export function Throttle(waitMs: number) {
 class InputController {
 
     private listeners = new Map<keyof InputEventMap, Set<Function>>()
+    private bindings: any[] = []
 
     constructor() {
         this.bind()
+    }
+
+    destroy(): void {
+        for (const b of this.bindings) {
+            if (!b) continue
+            if (typeof b === "function") {
+                b()
+                continue
+            }
+            if (typeof b.cancel === "function") {
+                b.cancel()
+            }
+        }
+        this.bindings = []
+        this.listeners.clear()
     }
 
     subscribe<K extends keyof InputEventMap>(eventName: K, handler: Handler<InputEventMap[K]>): () => void {
@@ -79,10 +95,10 @@ class InputController {
     private bind(): void {
         for (const action of Object.keys(keyBindings)) {
             if (action.startsWith("move")) {
-                k.onButtonDown(action, () => this.onMoveIsHeld(action as MoveAction))
+                this.bindings.push(k.onButtonDown(action, () => this.onMoveIsHeld(action as MoveAction)))
             }
             else {
-                k.onButtonPress(action, () => this.emit(action as keyof InputEventMap, undefined as any))
+                this.bindings.push(k.onButtonPress(action, () => this.emit(action as keyof InputEventMap, undefined as any)))
             }
         }
     }

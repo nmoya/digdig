@@ -50,8 +50,7 @@ class HUD {
     }
 
     updateHud(): void {
-        const status = this.game_over ? "  GAME OVER (R to restart)" : this.win ? "  YOU WIN! (R to restart)" : ""
-        this.text.text = `${this.levelName}   Gems: ${this.collected}/${this.total_gems}   Bombs: ${this.current_bombs}${status}`
+        this.text.text = `${this.levelName}   Gems: ${this.collected}/${this.total_gems}   Bombs: ${this.current_bombs}`
     }
 
     setCollected(count: number): void {
