@@ -11,22 +11,17 @@ class LevelRenderer {
     private mutableEntities: Entity[][];
 
     private vis: (any | null)[][];
-    private initialPlayerXY: [number, number];
-    private exitXY: [number, number];
     private totalGems: number = 0;
 
     constructor(level: Level, tileSize: number, offsetY: number = 0) {
         this.level = level;
         this.tileSize = tileSize;
         this.offsetY = offsetY;
-
+        this.vis = this.initVisGrid();
         this.mutableEntities = level.cloneCells();
+        this.closeExit();
 
         this.totalGems = this.level.totalGems();
-        this.initialPlayerXY = this.level.playerPosition();
-        this.exitXY = this.level.exitPosition();
-        this.vis = this.initVisGrid();
-
     }
 
     restart(): void {
@@ -35,12 +30,18 @@ class LevelRenderer {
     }
 
     getInitialPlayerPosition(): [number, number] {
-        return this.initialPlayerXY;
+        return this.level.playerPosition();
     }
 
     openExit(): void {
-        const [ex, ey] = this.exitXY;
+        const [ex, ey] = this.level.exitPosition();
         this.setCell(ex, ey, registry.openExit());
+        this.drawCell(ex, ey);
+    }
+
+    closeExit(): void {
+        const [ex, ey] = this.level.exitPosition();
+        this.setCell(ex, ey, registry.closedExit());
         this.drawCell(ex, ey);
     }
 

@@ -168,6 +168,11 @@ class EntityRegistry {
         return this.byChar(tmp.getLevelCharacter())!;
     }
 
+    closedExit(): Entity {
+        const tmp = Entity.closedExit();
+        return this.byChar(tmp.getLevelCharacter())!;
+    }
+
     player(): Entity {
         const tmp = Entity.player();
         return this.byChar(tmp.getLevelCharacter())!;
