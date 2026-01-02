@@ -1,7 +1,7 @@
 import { registerGameScene } from "./gameScene"
-import { registerGameOverScene } from "./gameOverScene"
-import { registerMainMenuScene } from "./mainMenuScene"
-import { registerWinScene } from "./winScene"
+import { registerGameOverScene } from "./gameOver"
+import { registerMainMenuScene } from "./mainMenu"
+import { registerWinScene } from "./win"
 
 export function registerScenes(): void {
     registerMainMenuScene()

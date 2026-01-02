@@ -30,6 +30,17 @@ const keyBindings: ButtonsDef = {
         keyboard: ["k"],
         gamepad: [],
     },
+
+    // Debug: jump directly to a level via number keys.
+    jumpLevel1: { keyboard: ["1"], gamepad: [] },
+    jumpLevel2: { keyboard: ["2"], gamepad: [] },
+    jumpLevel3: { keyboard: ["3"], gamepad: [] },
+    jumpLevel4: { keyboard: ["4"], gamepad: [] },
+    jumpLevel5: { keyboard: ["5"], gamepad: [] },
+    jumpLevel6: { keyboard: ["6"], gamepad: [] },
+    jumpLevel7: { keyboard: ["7"], gamepad: [] },
+    jumpLevel8: { keyboard: ["8"], gamepad: [] },
+    jumpLevel9: { keyboard: ["9"], gamepad: [] },
 }
 
 const k: any = kaplay({

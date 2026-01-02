@@ -31,9 +31,31 @@ export function registerGameScene(): void {
         const input = new InputController()
         const cleanBindings = game.bindInput(input)
 
+        const levelJumpBindings: any[] = []
+        for (let i = 1; i <= 9; i++) {
+            levelJumpBindings.push(
+                k.onButtonPress(`jumpLevel${i}`, () => {
+                    const config = LEVELS[i - 1]
+                    if (!config) return
+                    k.go("game", config)
+                })
+            )
+        }
+
         k.onSceneLeave(() => {
             cleanBindings()
             input.destroy()
+
+            for (const b of levelJumpBindings) {
+                if (!b) continue
+                if (typeof b === "function") {
+                    b()
+                    continue
+                }
+                if (typeof b.cancel === "function") {
+                    b.cancel()
+                }
+            }
         })
 
         k.onUpdate(() => {
