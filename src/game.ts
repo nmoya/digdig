@@ -1,4 +1,36 @@
 import kaplay from "kaplay"
+import { type ButtonsDef } from "kaplay"
+
+const keyBindings: ButtonsDef = {
+    moveUp: {
+        keyboard: ["w", "up"],
+        gamepad: ["north", "dpad-up"],
+    },
+    moveDown: {
+        keyboard: ["s", "down"],
+        gamepad: ["south", "dpad-down"],
+    },
+    moveLeft: {
+        keyboard: ["a", "left"],
+        gamepad: ["west", "dpad-left"],
+    },
+    moveRight: {
+        keyboard: ["d", "right"],
+        gamepad: ["east", "dpad-right"],
+    },
+    bomb: {
+        keyboard: ["space"],
+        gamepad: ["rshoulder"],
+    },
+    restart: {
+        keyboard: ["r"],
+        gamepad: ["start"],
+    },
+    winLevel: {
+        keyboard: ["k"],
+        gamepad: [],
+    },
+}
 
 const k: any = kaplay({
     width: 320,
@@ -11,6 +43,7 @@ const k: any = kaplay({
     global: false,
     debug: true,
     debugKey: "]",
+    buttons: keyBindings
 })
 
 k.loadRoot("./")
@@ -24,4 +57,4 @@ k.loadSprite("rock", `sprites/rock.png`)
 k.loadSprite("wall", `sprites/wall.png`)
 
 
-export default k
+export { k, keyBindings }

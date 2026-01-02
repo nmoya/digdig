@@ -5,6 +5,7 @@ import LevelRenderer from "./levelRenderer"
 import Player from "./player"
 import { Entity, registry } from "./entities"
 import { LogInOut } from "./debug"
+import type InputController from "./input"
 
 class GameLogic {
     private collected = 0
@@ -47,6 +48,36 @@ class GameLogic {
     collectDiamond(): void {
         this.collected++
         this.hud.setCollected(this.collected)
+    }
+
+    bindInput(input: InputController): () => void {
+        const unsubscribers = [
+            input.subscribe("move", ({ action }) => {
+                switch (action) {
+                    case "moveUp":
+                        this.movePlayer(0, -1)
+                        break
+                    case "moveDown":
+                        this.movePlayer(0, 1)
+                        break
+                    case "moveLeft":
+                        this.movePlayer(-1, 0)
+                        break
+                    case "moveRight":
+                        this.movePlayer(1, 0)
+                        break
+                }
+            }),
+            input.subscribe("bomb", () => this.useBomb()),
+            input.subscribe("restart", () => this.restart()),
+            input.subscribe("winLevel", () => this.winLevel()),
+        ]
+
+        return () => {
+            for (const unsubscribe of unsubscribers) {
+                unsubscribe()
+            }
+        }
     }
 
     @LogInOut

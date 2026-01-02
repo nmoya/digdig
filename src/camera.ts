@@ -1,4 +1,4 @@
-import k from "./game"
+import { k } from "./game"
 import { HUD_BAR_HEIGHT, TILE } from "./constants"
 import Player from "./player"
 import LevelRenderer from "./levelRenderer"

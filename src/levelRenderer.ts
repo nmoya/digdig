@@ -1,5 +1,5 @@
 import Level from "./level"
-import k from "./game"
+import { k } from "./game"
 import { registry, Entity } from "./entities"
 
 

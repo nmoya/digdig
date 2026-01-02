@@ -1,4 +1,4 @@
-import k from "./game"
+import { k } from "./game"
 import { HUD_BAR_HEIGHT, INITIAL_BOMB_COUNT, TILE, LevelConfig, LEVELS } from "./constants"
 import Level from "./level"
 import LevelRenderer from "./levelRenderer"
@@ -21,14 +21,10 @@ k.scene("game", async (levelToLoad: LevelConfig) => {
     const game = new GameLogic(renderer, player, hud)
     const camera = new CameraFollow(renderer, player)
     renderer.redrawAll()
-    new InputController({
-        move: (dx, dy) => game.movePlayer(dx, dy),
-        bomb: () => game.useBomb(),
-        restart: () => game.restart(),
-        winLevel: () => {
-            game.winLevel()
-        }
-    })
+
+    const input = new InputController()
+    const cleanBindings = game.bindInput(input)
+    k.onSceneLeave(() => cleanBindings())
 
     k.onUpdate(() => {
         const dt = k.dt()

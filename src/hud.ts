@@ -1,4 +1,4 @@
-import k from "./game"
+import { k } from "./game"
 import { HUD_BAR_HEIGHT } from "./constants"
 
 class HUD {

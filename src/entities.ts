@@ -1,4 +1,4 @@
-import k from "./game"
+import { k } from "./game"
 
 type RGB = [number, number, number]
 
