@@ -29,8 +29,8 @@ class HUD {
         ])
 
         this.text = k.add([
-            k.text("", { size: 12 }),
-            k.pos(10, 4),
+            k.text("", { size: 8 }),
+            k.pos(0, 0),
             k.fixed(),
             k.layer("ui"),
             k.z(110),
